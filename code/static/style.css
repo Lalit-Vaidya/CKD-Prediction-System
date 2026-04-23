@@ -1,0 +1,101 @@
+body {
+    box-sizing: border-box;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
+
+    background-image: url("https://plus.unsplash.com/premium_photo-1702598804759-8fb687f774fb?w=600&auto=format&fit=crop&q=60");
+    background-size: cover;
+    margin: 0;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.container {
+    width: 720px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 30px;
+    border-radius: 15px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    color: white;
+}
+
+h2 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    background: linear-gradient(to right, #00dbde, #fc00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+input[type="text"], input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+input:focus {
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 8px #00dbde;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #e0e7ff;
+}
+
+button {
+    width: 220px;
+    padding: 10px;
+    border-radius: 25px;
+    border: none;
+    margin: 15px auto;
+    display: block;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.upload {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    color: white;
+}
+
+.generate {
+    background: linear-gradient(45deg, #ff6a00, #ee0979);
+    color: white;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.uploadhead::after {
+    content: "";
+    display: block;
+    width: 30px;
+    height: 2px;
+    margin-top: 4px;
+    background: linear-gradient(to right, #00dbde, #fc00ff);
+    transition: width 0.3s;
+}
+
+.uploadhead:hover::after {
+    width: 140px;
+}

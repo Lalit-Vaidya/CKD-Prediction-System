@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CKD Medical Report System</title>
+
+    <!-- LINK CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+    <h2>CKD Medical Report System</h2>
+
+    <!-- Upload Section -->
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <label class="uploadhead">Upload Lab Report</label>
+        <input type="file" name="lab_report" required>
+
+        <button type="submit" class="upload">Upload & Extract</button>
+    </form>
+
+    <!-- Prediction Form -->
+    <form action="/predict" method="POST">
+
+    <div class="form-grid">
+
+        <div>
+            <label>Patient Name</label>
+            <input type="text" name="name" value="{{ values.name }}">
+        </div>
+
+        <div>
+            <label>Age (years)</label>
+            <input type="text" name="age" value="{{ values.age }}">
+        </div>
+
+        <div>
+            <label>Place</label>
+            <input type="text" name="place" value="{{ values.place }}">
+        </div>
+
+        <div>
+            <label>Blood Pressure (mmHg)</label>
+            <input type="text" name="bp" value="{{ values.bp }}">
+        </div>
+
+        <div>
+            <label>Albumin (g/dL)</label>
+            <input type="text" name="albumin" value="{{ values.albumin }}">
+        </div>
+
+        <div>
+            <label>Sugar (mg/dL)</label>
+            <input type="text" name="sugar" value="{{ values.sugar }}">
+        </div>
+
+        <div>
+            <label>Glucose (mg/dL)</label>
+            <input type="text" name="glucose" value="{{ values.glucose }}">
+        </div>
+
+        <div>
+            <label>Urea (mg/dL)</label>
+            <input type="text" name="urea" value="{{ values.urea }}">
+        </div>
+
+        <div>
+            <label>Creatinine (mg/dL)</label>
+            <input type="text" name="creatinine" value="{{ values.creatinine }}">
+        </div>
+
+        <div>
+            <label>Hemoglobin (g/dL)</label>
+            <input type="text" name="hemoglobin" value="{{ values.hemoglobin }}">
+        </div>
+
+    </div>
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="sg" value="{{ values.sg }}">
+    <input type="hidden" name="sodium" value="{{ values.sodium }}">
+    <input type="hidden" name="potassium" value="{{ values.potassium }}">
+    <input type="hidden" name="pcv" value="{{ values.pcv }}">
+    <input type="hidden" name="wbc" value="{{ values.wbc }}">
+    <input type="hidden" name="rbc" value="{{ values.rbc }}">
+
+    <button type="submit" class="generate">Generate Medical Report</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

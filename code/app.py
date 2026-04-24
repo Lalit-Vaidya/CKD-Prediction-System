@@ -8,24 +8,30 @@ import re
 from app2 import generate_ckd_report
 
 # -------- TESSERACT PATH --------
+# Path where Tesseract OCR is installed (required for text extraction)
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # -------- APP INIT --------
+# Initialize Flask application
 app = Flask(__name__)
 
 # -------- BASE PATH --------
+# Get current file directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # -------- FOLDERS --------
+# Create folders for storing uploaded images and generated reports
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 REPORT_FOLDER = os.path.join(BASE_DIR, "reports")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(REPORT_FOLDER, exist_ok=True)
 
+# Configure upload folder
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # -------- DATABASE --------
+# Connect to MySQL database
 db = mysql.connector.connect(
     host="localhost",
     user="ckduser",
@@ -35,6 +41,7 @@ db = mysql.connector.connect(
 cursor = db.cursor()
 
 # -------- HELPER FUNCTION --------
+# Extract numeric value from string (used for OCR outputs)
 def get_number(value):
     if value is None or value == "":
         return 0
@@ -42,19 +49,26 @@ def get_number(value):
     return float(num[0]) if num else 0
 
 # -------- OCR FUNCTION --------
+# Extract lab values from uploaded image using OCR
 def extract_lab_values(image_path):
     img = cv2.imread(image_path)
 
+    # Convert image to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Apply threshold to improve OCR accuracy
     gray = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)[1]
 
+    # Extract text from image
     text = pytesseract.image_to_string(gray)
     print("\nOCR TEXT:\n", text)
 
+    # Function to extract text using regex
     def find_value(pattern):
         match = re.search(pattern, text, re.IGNORECASE)
         return match.group(1) if match else ""
 
+    # Extract only first numeric value from line
     def extract_value_only(keyword):
         for line in text.split("\n"):
             if keyword.lower() in line.lower():
@@ -63,6 +77,7 @@ def extract_lab_values(image_path):
                     return numbers[0]
         return ""
 
+    # Special handling for RBC (text-based)
     def extract_rbc():
         for line in text.split("\n"):
             if "rbc" in line.lower():
@@ -72,6 +87,7 @@ def extract_lab_values(image_path):
                     return "Normal"
         return ""
 
+    # Store extracted values
     values = {
         "name": find_value(r"Patient Name[:\-]?\s*([A-Za-z ]+)"),
         "age": find_value(r"Age[:\-]?\s*(\d+)"),
@@ -96,6 +112,7 @@ def extract_lab_values(image_path):
     return values
 
 # -------- CKD STAGE --------
+# Determine CKD stage based on creatinine value
 def get_ckd_stage(creatinine):
     if creatinine <= 1.2:
         return "Stage 1"
@@ -109,6 +126,7 @@ def get_ckd_stage(creatinine):
         return "Stage 5"
 
 # -------- STAGE DETAILS --------
+# Provide description and preventive measures for each stage
 def get_stage_details(stage):
     details = {
         "Stage 1": {
@@ -164,7 +182,8 @@ def get_stage_details(stage):
     }
     return details[stage]
 
-# -------- HOME --------
+# -------- HOME PAGE --------
+# Load homepage with empty values
 @app.route('/')
 def index():
     empty_values = {key: "" for key in [
@@ -173,7 +192,8 @@ def index():
     ]}
     return render_template('index.html', values=empty_values)
 
-# -------- OCR UPLOAD --------
+# -------- FILE UPLOAD --------
+# Upload lab report and extract values using OCR
 @app.route('/upload', methods=['POST'])
 def upload():
     file = request.files['lab_report']
@@ -183,10 +203,12 @@ def upload():
     values = extract_lab_values(filepath)
     return render_template("index.html", values=values)
 
-# -------- PREDICT --------
+# -------- PREDICTION --------
+# Predict CKD stage and generate report
 @app.route('/predict', methods=['POST'])
 def predict():
 
+    # Get form data
     name = request.form.get('name') or "N/A"
     age = request.form.get('age') or "N/A"
     place = request.form.get('place') or "N/A"
@@ -206,11 +228,14 @@ def predict():
     wbc = request.form.get('wbc') or "-"
     rbc = request.form.get('rbc') or "-"
 
+    # Convert creatinine to numeric
     creatinine_val = get_number(creatinine)
 
+    # Get stage and details
     stage = get_ckd_stage(creatinine_val)
     details = get_stage_details(stage)
 
+    # Determine risk level
     if creatinine_val > 5:
         risk = "HIGH RISK - STAGE 5 CKD"
     elif creatinine_val > 3:
@@ -222,7 +247,7 @@ def predict():
     else:
         risk = "LOW RISK - STAGE 1 CKD"
 
-    # -------- DB INSERT --------
+    # -------- DATABASE INSERT --------
     sql = """INSERT INTO patients 
     (name, age, bp, albumin, sugar, glucose, urea, creatinine, hemoglobin, prediction, risk_level, test_date)
     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
@@ -238,7 +263,7 @@ def predict():
     cursor.execute(sql, values_db)
     db.commit()
 
-    # -------- PDF --------
+    # -------- GENERATE PDF REPORT --------
     file_name = generate_ckd_report(
         name=name, age=age, place=place,
         bp=bp, sg=sg, albumin=albumin, sugar=sugar,
@@ -250,6 +275,6 @@ def predict():
 
     return send_file(file_name, as_attachment=True)
 
-# -------- RUN --------
+# -------- RUN APP --------
 if __name__ == '__main__':
     app.run(debug=True)

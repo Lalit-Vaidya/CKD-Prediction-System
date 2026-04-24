@@ -9,12 +9,18 @@ from reportlab.lib import colors
 
 
 # -------- BASE PATH --------
+# Get current file directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Define report folder path
 REPORT_DIR = os.path.join(BASE_DIR, "reports")
+
+# Create reports folder if not exists
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 
-# -------- BORDER --------
+# -------- BORDER FUNCTION --------
+# Draw border around the PDF page
 def draw_border(canvas, doc):
     width, height = letter
     margin = 20
@@ -23,6 +29,8 @@ def draw_border(canvas, doc):
     canvas.rect(margin, margin, width - 2 * margin, height - 2 * margin)
 
 
+# -------- MAIN REPORT FUNCTION --------
+# Generate CKD medical PDF report
 def generate_ckd_report(
     name=None, age=None, place=None,
     bp=None, sg=None, albumin=None, sugar=None, glucose=None, urea=None, creatinine=None,
@@ -31,17 +39,25 @@ def generate_ckd_report(
 ):
 
     # -------- SAFE FILE NAME --------
+    # Replace spaces with underscore to avoid file errors
     safe_name = str(name).replace(" ", "_")
+
+    # Create full file path
     file_name = os.path.join(REPORT_DIR, f"CKD_{safe_name}.pdf")
 
+    # Generate random IDs
     report_id = "CKD" + str(random.randint(1000, 9999))
     patient_id = "PID" + str(random.randint(1000, 9999))
 
+    # Create PDF document
     pdf = SimpleDocTemplate(file_name, pagesize=letter)
 
+    # Load default styles
     styles = getSampleStyleSheet()
 
     # -------- CUSTOM STYLES --------
+    # Add custom styles only if not already present
+
     if 'MyTitle' not in styles:
         styles.add(ParagraphStyle(name='MyTitle', alignment=TA_CENTER, fontSize=20, textColor=colors.darkblue))
 
@@ -63,33 +79,45 @@ def generate_ckd_report(
     if 'MyRed' not in styles:
         styles.add(ParagraphStyle(name='MyRed', fontSize=12, textColor=colors.red))
 
+    # Store all PDF elements
     content = []
 
-    # -------- HEADER --------
+    # -------- HEADER SECTION --------
     content.append(Spacer(1, 10))
+
+    # Hospital name
     content.append(Paragraph("CITY CARE HOSPITAL & DIAGNOSTIC CENTER", styles['MyTitle']))
+
     content.append(Spacer(1, 4))
+
+    # Address and contact
     content.append(Paragraph("Ichalkaranji, Maharashtra | 9876543210", styles['MySubTitle']))
+
     content.append(Spacer(1, 6))
 
+    # Doctor details
     doctor_info = """
     <b>Dr. Amit Patil</b><br/>
     MD (Nephrology)<br/>
     Kidney Specialist
     """
     content.append(Paragraph(doctor_info, styles['MyRight']))
+
     content.append(Spacer(1, 12))
 
+    # Report title
     content.append(Paragraph("Chronic Kidney Disease Medical Report", styles['MySection']))
+
     content.append(Spacer(1, 10))
 
-    # -------- PATIENT TABLE --------
+    # -------- PATIENT DETAILS TABLE --------
     patient_table = Table([
         ["Patient ID", patient_id, "Report ID", report_id],
         ["Name", name, "Visit Date", str(date.today())],
         ["Age", age, "Place", place]
     ], colWidths=[100, 150, 100, 150])
 
+    # Table styling
     patient_table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -100,9 +128,10 @@ def generate_ckd_report(
     content.append(patient_table)
     content.append(Spacer(1, 15))
 
-    # -------- LAB TABLE --------
+    # -------- LAB TEST RESULTS --------
     content.append(Paragraph("Laboratory Test Results", styles['MySection']))
 
+    # Table data
     lab_data = [
         ["Test", "Result", "Normal Range"],
         ["Blood Pressure", bp, "80–120 mmHg"],
@@ -131,20 +160,25 @@ def generate_ckd_report(
     content.append(lab_table)
     content.append(Spacer(1, 15))
 
-    # -------- RISK --------
+    # -------- RISK & STAGE --------
+    # Extract stage number
     stage_num = int(stage.split()[-1])
+
+    # Apply color (green for low, red for high)
     risk_style = styles['MyGreen'] if stage_num <= 2 else styles['MyRed']
 
     content.append(Paragraph(f"<b>Risk Level:</b> {risk}", risk_style))
     content.append(Paragraph(f"<b>CKD Stage:</b> {stage}", styles['MyText']))
+
     content.append(Spacer(1, 10))
 
     # -------- DESCRIPTION --------
     content.append(Paragraph("<b>Description:</b>", styles['MySection']))
     content.append(Paragraph(details['desc'], styles['MyText']))
+
     content.append(Spacer(1, 10))
 
-    # -------- PREVENTIVE --------
+    # -------- PREVENTIVE MEASURES --------
     content.append(Paragraph("Preventive Measures", styles['MySection']))
     content.append(Spacer(1, 6))
 
@@ -154,11 +188,11 @@ def generate_ckd_report(
 
     content.append(Spacer(1, 25))
 
-    # Signature
+    # -------- SIGNATURE --------
     content.append(Paragraph("Dr. Amit Patil", styles['MyRight']))
     content.append(Paragraph("Signature: ____________________", styles['MyRight']))
 
-    # -------- BUILD --------
+    # -------- BUILD PDF --------
     pdf.build(content, onFirstPage=draw_border, onLaterPages=draw_border)
 
     return file_name
